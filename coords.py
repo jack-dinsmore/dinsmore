@@ -21,3 +21,35 @@ def rough_sky_to_ra_dec(x, y, xcol, ycol):
     xs = (x - xcol.coord_ref_point) * xcol.coord_inc + xcol.coord_ref_value
     ys = (y - ycol.coord_ref_point) * ycol.coord_inc + ycol.coord_ref_value
     return xs, ys
+
+def from_hms(s):
+    # Convert the passed string from hms to degrees
+    h, m, s = s.split(':')
+    return (float(h) + float(m) / 60 + float(s)/3600) * 360 / 24
+
+def to_hms(d):
+    # Convert the passed string from dms to degrees
+    x = d * 24 / 360
+    h = int(x)
+    x = (x- int(x)) * 60
+    m = int(x)
+    x = (x- int(x)) * 60
+    s = x
+    return f"{h:02d}:{m:02d}:{s}"
+
+def from_dms(s):
+    # Convert the passed string to hms from degrees
+    d, m, s = s.split(':')
+    x = np.abs(float(d)) + float(m) / 60 + float(s)/3600
+    return np.sign(float(d)) * x
+
+def to_dms(d):
+    # Convert the passed string to dms from degrees
+    sign = "-" if d < 0 else ""
+    x = np.abs(d)
+    d = int(x)
+    x = (x- int(x)) * 60
+    m = int(x)
+    x = (x- int(x)) * 60
+    s = x
+    return f"{sign}{d:02d}:{m:02d}:{s}"
