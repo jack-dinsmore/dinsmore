@@ -1,12 +1,21 @@
 import numpy as np
+from palettable.cubehelix import Cubehelix
+
+def cubehelix(start, rotations=0, hue_start=2, hue_end=2, gamma=1, lightness_start=0, lightness_end=1, reverse=False):
+    # https://davidjohnstone.net/cubehelix-gradient-picker
+
+    return Cubehelix.make(
+        start=start/120+1, rotation=rotations, gamma=gamma,
+        min_sat=hue_start, max_sat=hue_end, min_light=lightness_start, max_light=lightness_end,
+        reverse=reverse, n=256
+    ).get_mpl_colormap()
+
 
 def step(ax, x_edges, y, **kwargs):
     if len(x_edges) != len(y) + 1:
         raise Exception(f"Length of x ({len(x_edges)}) must be one greater than length of y ({len(y)})")
     new_y = np.concatenate([[y[0]], y])
     ax.step(x_edges, new_y, **kwargs)
-
-
 
 def diagram_arrow(ax, start, end, tilt=0.4, aspect=0.3, head_scale=0.05, color='k', lw=1, line_kwargs={}, arrow_kwargs={}):
     if tilt < 0 or tilt > 1:
