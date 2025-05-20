@@ -27,7 +27,7 @@ def from_hms(s):
     h, m, s = s.split(':')
     return (float(h) + float(m) / 60 + float(s)/3600) * 360 / 24
 
-def to_hms(d):
+def to_hms(d, arcsec_precision=None):
     # Convert the passed string from dms to degrees
     x = d * 24 / 360
     h = int(x)
@@ -35,6 +35,8 @@ def to_hms(d):
     m = int(x)
     x = (x- int(x)) * 60
     s = x
+    if arcsec_precision is not None:
+        s = round(s, arcsec_precision)
     return f"{h:02d}:{m:02d}:{s}"
 
 def from_dms(s):
@@ -43,7 +45,7 @@ def from_dms(s):
     x = np.abs(float(d)) + float(m) / 60 + float(s)/3600
     return np.sign(float(d)) * x
 
-def to_dms(d):
+def to_dms(d, arcsec_precision=None):
     # Convert the passed string to dms from degrees
     sign = "-" if d < 0 else ""
     x = np.abs(d)
@@ -52,4 +54,6 @@ def to_dms(d):
     m = int(x)
     x = (x- int(x)) * 60
     s = x
+    if arcsec_precision is not None:
+        s = round(s, arcsec_precision)
     return f"{sign}{d:02d}:{m:02d}:{s}"
