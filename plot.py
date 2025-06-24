@@ -1,5 +1,6 @@
 import numpy as np
 from palettable.cubehelix import Cubehelix
+SEPIA = "#ba9988"
 
 def cubehelix(start, rotations=0, hue_start=2, hue_end=2, gamma=1, lightness_start=0, lightness_end=1, reverse=False):
     # https://davidjohnstone.net/cubehelix-gradient-picker
@@ -9,7 +10,6 @@ def cubehelix(start, rotations=0, hue_start=2, hue_end=2, gamma=1, lightness_sta
         min_sat=hue_start, max_sat=hue_end, min_light=lightness_start, max_light=lightness_end,
         reverse=reverse, n=256
     ).get_mpl_colormap()
-
 
 def step(ax, x_edges, y, **kwargs):
     if len(x_edges) != len(y) + 1:

@@ -9,7 +9,10 @@ def get_sigma_from_chisq(chisq, dof):
     return np.sqrt(2) * erfcinv(gammaincc(dof/2, chisq/2))
 
 def get_threshold(image, percentile):
-    # Returns a number such that (percentile)% of the image values are above that number
+    """
+    Returns a number such that (percentile)% of the image values are above that number
+    """
+    
     width = np.max(image) / 100
     def theta_func(image, thresh):
         # 1 if image > thresh, 0 otherwise, blur in between

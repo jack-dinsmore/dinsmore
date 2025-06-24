@@ -99,20 +99,26 @@ class PolygonRegion(Region):
 
     
 class CircleRegion(Region):
-    def __init__(self, filename):
+    def __init__(self, filename, physical=False):
         with open(filename) as f:
             line = f.readline()
             if not line.startswith("circle("):
                 self.success = False
                 return
             x, y, radius = line[7:-2].split(",")
-            self.x = from_hms(x)
-            self.y = from_dms(y)
+            if physical:
+                self.x = float(x)
+                self.y = float(y)
+                self.stretch = 1
+            else:
+                self.x = from_hms(x)
+                self.y = from_dms(y)
+                self.stretch = np.cos(self.x * np.pi / 180)
             self.radius2 = from_angle(radius)**2
             self.success = True
     
     def check_inside_absolute(self, x, y):
-        dist2 = (x - self.x)**2 + (y - self.y)**2
+        dist2 = (x - self.x)**2 / self.stretch**2 + (y - self.y)**2
         return dist2 < self.radius2
     
 

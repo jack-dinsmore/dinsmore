@@ -8,4 +8,5 @@ def blur(image, sigma):
     xs, ys = np.meshgrid(line, line)
     gauss = np.exp(-(xs**2 + ys**2) / (2*sigma**2))
     gauss /= np.sum(gauss)
-    return convolve(image, gauss, mode="same")
+    flat = convolve(np.ones_like(image), gauss, mode="same")
+    return convolve(image, gauss, mode="same") / flat
