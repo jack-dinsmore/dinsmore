@@ -14,29 +14,51 @@ def from_angle(s):
     return f
 
 class Region:
-    def __init__(self, filename):
+    def __init__(self):
         raise Exception("You cannot instantiate the pure base class Region")
+    
+    def load(filename, physical=False):
+        with open(filename) as f:
+            line = f.readline()
+            typ = line[:line.find('(')]
+        if typ == "circle":
+            return CircleRegion(filename, physical)
+        elif typ == "polygon":
+            return PolygonRegion(filename, physical)
+        elif typ == "box":
+            return BoxRegion(filename, physical)
+        elif typ == "ellipse":
+            return EllipseRegion(filename, physical)
+        else:
+            raise Exception(f"Unrecognized region type `{typ}`")
         
     def check_inside_absolute(self, x, y):
         """Return True if (x, y) is inside the region"""
         raise Exception("You cannot instantiate the pure base class Region")
     
 class BoxRegion(Region):
-    def __init__(self, filename):
+    def __init__(self, filename, physical=False):
         with open(filename) as f:
             line = f.readline()
             if not line.startswith("box("):
                 self.success = False
                 return
             x, y, l, w, angle = line[4:-2].split(",")
-            self.x = from_hms(x)
-            self.y = from_dms(y)
+            if physical:
+                self.x = float(x)
+                self.y = float(y)
+            else:
+                self.x = from_hms(x)
+                self.y = from_dms(y)
             self.l = from_angle(l)
             self.w = from_angle(w)
             self.angle = float(angle) * np.pi / 180
             self.success = True
+            self.physical=physical
 
     def get_alpha(self, x, y, v0, v1):
+        if not self.physical:
+            print("WARNING: I don't think I implemented stretch. Please verify")
         return ((x - self.x) * v0 + (y - self.y) * v1) / (v0*v0 + v1*v1)
     
     def check_inside_absolute(self, x, y):
@@ -47,7 +69,7 @@ class BoxRegion(Region):
 
     
 class PolygonRegion(Region):
-    def __init__(self, filename):
+    def __init__(self, filename, physical=False):
         with open(filename) as f:
             line = f.readline()
             if not line.startswith("polygon("):
@@ -56,9 +78,13 @@ class PolygonRegion(Region):
             points = line[8:-2].split(",")
             self.points = []
             for i in range(0, len(points), 2):
-                self.points.append((from_hms(points[i]), from_dms(points[i+1])))
+                if physical:
+                    self.points.append((float(points[i]), float(points[i+1])))
+                else:
+                    self.points.append((from_hms(points[i]), from_dms(points[i+1])))
             self.points = np.array(self.points)
             self.success = True
+            self.physical = physical
 
     def check_inside_single(self, x, y):
         # Assume x and y are in degrees
@@ -116,6 +142,7 @@ class CircleRegion(Region):
                 self.stretch = np.cos(self.x * np.pi / 180)
             self.radius2 = from_angle(radius)**2
             self.success = True
+            self.physical = physical
     
     def check_inside_absolute(self, x, y):
         dist2 = (x - self.x)**2 / self.stretch**2 + (y - self.y)**2
@@ -124,24 +151,30 @@ class CircleRegion(Region):
 
     
 class EllipseRegion(Region):
-    def __init__(self, filename):
+    def __init__(self, filename, physical=False):
         with open(filename) as f:
             line = f.readline()
             if not line.startswith("ellipse("):
                 self.success = False
                 return
             ra, dec, a, b, angle = line[8:-2].split(",")
-            self.ra = from_hms(ra)
-            self.dec = from_dms(dec)
-            self.stretch = np.cos(self.dec * np.pi / 180)
+            if physical:
+                self.ra = float(ra)
+                self.dec = float(dec)
+                self.stretch = 1
+            else:
+                self.ra = from_hms(ra)
+                self.dec = from_dms(dec)
+                self.stretch = np.cos(self.dec * np.pi / 180)
             self.a = from_angle(a)
             self.b = from_angle(b)
             self.angle = from_angle(angle) * np.pi / 180
             self.success = True
+            self.physical = physical
     
     def check_inside_absolute(self, x, y):
-        rot_x = np.cos(self.angle) * (x - self.ra) * self.stretch - np.sin(self.angle) * (y - self.dec)
-        rot_y = np.sin(self.angle) * (x - self.ra) * self.stretch + np.cos(self.angle) * (y - self.dec)
+        rot_x = np.sin(self.angle) * (x - self.ra) + np.cos(self.angle) * (y - self.dec)
+        rot_y = -np.cos(self.angle) * (x - self.ra) + np.sin(self.angle) * (y - self.dec)
         d = rot_x**2 / self.a**2 + rot_y**2 / self.b**2
         return d < 1
     
