@@ -63,8 +63,8 @@ class BoxRegion(Region):
     
     def check_inside_absolute(self, x, y):
         # Assume x and y are in degrees
-        l_alpha = self.get_alpha(x, y, self.l * np.cos(self.angle), -self.l * np.sin(self.angle))
-        w_alpha = self.get_alpha(x, y, -self.w * np.sin(self.angle), -self.w * np.cos(self.angle))
+        l_alpha = self.get_alpha(x, y, self.l * np.cos(self.angle), self.l * np.sin(self.angle))
+        w_alpha = self.get_alpha(x, y, self.w * np.sin(self.angle), -self.w * np.cos(self.angle))
         return (np.abs(l_alpha) < 0.5) & (np.abs(w_alpha) < 0.5)
 
     
@@ -139,13 +139,13 @@ class CircleRegion(Region):
             else:
                 self.x = from_hms(x)
                 self.y = from_dms(y)
-                self.stretch = np.cos(self.x * np.pi / 180)
+                self.stretch = np.cos(self.y * np.pi / 180)
             self.radius2 = from_angle(radius)**2
             self.success = True
             self.physical = physical
     
     def check_inside_absolute(self, x, y):
-        dist2 = (x - self.x)**2 / self.stretch**2 + (y - self.y)**2
+        dist2 = (x - self.x)**2 * self.stretch**2 + (y - self.y)**2
         return dist2 < self.radius2
     
 
