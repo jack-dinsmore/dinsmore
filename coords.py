@@ -18,7 +18,8 @@ def sky_to_ra_dec(x, y, xcol, ycol):
 
 
 def rough_sky_to_ra_dec(x, y, xcol, ycol):
-    xs = (x - xcol.coord_ref_point) * xcol.coord_inc + xcol.coord_ref_value
+    stretch = np.cos(ycol.coord_ref_value * np.pi / 180)
+    xs = (x - xcol.coord_ref_point)/stretch * xcol.coord_inc + xcol.coord_ref_value
     ys = (y - ycol.coord_ref_point) * ycol.coord_inc + ycol.coord_ref_value
     return xs, ys
 

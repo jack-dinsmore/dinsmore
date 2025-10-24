@@ -43,13 +43,17 @@ class BoxRegion(Region):
             if not line.startswith("box("):
                 self.success = False
                 return
-            x, y, l, w, angle = line[4:-2].split(",")
+            if line.endswith('\n'):
+                line = line[:-1]
+            x, y, l, w, angle = line[4:-1].split(",")
             if physical:
                 self.x = float(x)
                 self.y = float(y)
+                self.stretch = 1
             else:
                 self.x = from_hms(x)
                 self.y = from_dms(y)
+                self.stretch = np.cos(self.y * np.pi / 180)
             self.l = from_angle(l)
             self.w = from_angle(w)
             self.angle = float(angle) * np.pi / 180
@@ -57,14 +61,12 @@ class BoxRegion(Region):
             self.physical=physical
 
     def get_alpha(self, x, y, v0, v1):
-        if not self.physical:
-            print("WARNING: I don't think I implemented stretch. Please verify")
-        return ((x - self.x) * v0 + (y - self.y) * v1) / (v0*v0 + v1*v1)
+        return ((x - self.x) * v0 * -self.stretch + (y - self.y) * v1) / (v0*v0 + v1*v1)
     
     def check_inside_absolute(self, x, y):
         # Assume x and y are in degrees
-        l_alpha = self.get_alpha(x, y, self.l * np.cos(self.angle), self.l * np.sin(self.angle))
-        w_alpha = self.get_alpha(x, y, self.w * np.sin(self.angle), -self.w * np.cos(self.angle))
+        l_alpha = self.get_alpha(x, y, self.l * np.cos(self.angle), -self.l * np.sin(self.angle))
+        w_alpha = self.get_alpha(x, y, self.w * np.sin(self.angle), self.w * np.cos(self.angle))
         return (np.abs(l_alpha) < 0.5) & (np.abs(w_alpha) < 0.5)
 
     
@@ -75,7 +77,9 @@ class PolygonRegion(Region):
             if not line.startswith("polygon("):
                 self.success = False
                 return
-            points = line[8:-2].split(",")
+            if line.endswith('\n'):
+                line = line[:-1]
+            points = line[8:-1].split(",")
             self.points = []
             for i in range(0, len(points), 2):
                 if physical:
@@ -131,7 +135,9 @@ class CircleRegion(Region):
             if not line.startswith("circle("):
                 self.success = False
                 return
-            x, y, radius = line[7:-2].split(",")
+            if line.endswith('\n'):
+                line = line[:-1]
+            x, y, radius = line[7:-1].split(",")
             if physical:
                 self.x = float(x)
                 self.y = float(y)
@@ -157,7 +163,9 @@ class EllipseRegion(Region):
             if not line.startswith("ellipse("):
                 self.success = False
                 return
-            ra, dec, a, b, angle = line[8:-2].split(",")
+            if line.endswith('\n'):
+                line = line[:-1]
+            ra, dec, a, b, angle = line[8:-1].split(",")
             if physical:
                 self.ra = float(ra)
                 self.dec = float(dec)

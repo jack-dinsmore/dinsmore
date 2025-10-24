@@ -17,6 +17,27 @@ def step(ax, x_edges, y, **kwargs):
     new_y = np.concatenate([[y[0]], y])
     ax.step(x_edges, new_y, **kwargs)
 
+def step_between(ax, x_edges, y_top, y_bottom, **kwargs):
+    xs = []
+    y_tops = []
+    y_bottoms = []
+    for i in range(len(x_edges)-1):
+        xs.append(x_edges[i])
+        xs.append(x_edges[i+1])
+        y_tops.append(y_top[i])
+        y_tops.append(y_top[i])
+        y_bottoms.append(y_bottom[i])
+        y_bottoms.append(y_bottom[i])
+    ax.fill_between(xs, y_tops, y_bottoms, **kwargs)
+
+def vstep(ax, y_edges, x, **kwargs):
+    """Make a vertical histogram"""
+    if len(y_edges) != len(x) + 1:
+        raise Exception(f"Length of y ({len(y_edges)}) must be one greater than length of x ({len(x)})")
+    y_points = np.repeat(y_edges, 2)[1:-1]
+    x_points = np.repeat(x, 2)
+    ax.plot(x_points, y_points, **kwargs)
+
 def diagram_arrow(ax, start, end, tilt=0.4, aspect=0.3, head_scale=0.05, color='k', lw=1, line_kwargs={}, arrow_kwargs={}):
     if tilt < 0 or tilt > 1:
         raise Exception("Tilt should be between 0 and 1")
@@ -50,7 +71,7 @@ def crunch_legend(ax):
     You can create the legend with e.g. fig.legend(handles, labels, ncol=...)
     """
     handles, labels = ax.get_legend_handles_labels()
-    handles = np.array(handles)
+    handles = np.array(handles, dtype="object")
     labels = np.array(labels)
 
     # These two lines set unique_labels equal to the output of np.unique, but rearranged so that
@@ -63,3 +84,99 @@ def crunch_legend(ax):
         out_handles.append(tuple(handles[labels==label]))
         
     return out_handles, list(unique_labels)
+
+
+    
+def fix_float(f, thresh=1e-10):
+    if np.abs(f - np.round(f)) < thresh:
+        return np.round(f)
+    else:
+        return f
+
+def get_natural_ticks_sexa(lim, sepn=None, target_len=4):
+    """Returns some ticks which fall within lim. If not provided, the separation between ticks is chosen to be a round number and be close to `target_len` in length"""
+    if sepn is None:
+        rng = np.abs(lim[1] - lim[0])
+        try_power = int(np.log(rng)/np.log(60) - 1)
+
+        # Find the power with the closest to four ticks
+        best_len = np.inf
+        best_ticks = None
+        for power in range(try_power, try_power+3):
+            for sepn in [1, 2, 5, 10, 15, 30]:
+                ticks = get_natural_ticks_sexa(lim, 60**power * sepn)
+                if np.abs(best_len - target_len) > np.abs(len(ticks) - target_len):
+                    best_len = len(ticks)
+                    best_ticks = ticks
+        return best_ticks
+    
+    else:
+        # Generate ticks with this sepn
+        scale_lim = (lim[0] / sepn, lim[1] / sepn)
+        # List all integers between low and high
+        ticks = np.arange(max(*scale_lim) - min(*scale_lim)).astype(float)
+        ticks += np.ceil(min(*scale_lim))
+        ticks *= sepn
+        ticks = ticks[(ticks >= min(*lim)) & (ticks <= max(*lim))]
+        return ticks
+
+def replace_labels_sexa(ax, center_pos):
+    """Assumes the current labels are deviations in arcsec and sets the new labels to be in
+    sexagesimal format, given center_pos as the ra, dec of (0, 0) in degrees.
+    """
+    stretch = np.cos(center_pos[1] * np.pi / 180)
+
+    ticks = get_natural_ticks_sexa((np.array(ax.get_xlim())/stretch + center_pos[0]*3600)/15)
+    ticks = np.flip(ticks)
+    ticklabels = []
+    old_sh = None
+    old_sm = None
+    old_ss = None
+    for tick in ticks:
+        h = fix_float(np.abs(tick / 3600))
+        m = fix_float((h - int(h)) * 60)
+        s = fix_float((m - int(m)) * 60)
+
+        sh = f"{int(h):02d}$^\\mathrm{{h}}$"
+        if sh == old_sh: sh = ""
+        else: old_sh = sh
+        sm = f"{int(m):02d}$^\\mathrm{{m}}$"
+        if sm == old_sm: sm = ""
+        else: old_sm = sm
+        ss = f"{int(s):02d}$^\\mathrm{{s}}$"
+        if ss == old_ss or (sm != "" and s == 0.): ss = ""
+        else: old_ss = ss
+
+        ticklabels.append(f"{sh}{sm}{ss}")
+    ax.set_xticks((ticks*15 - center_pos[0]*3600) * stretch)
+    ax.set_xticklabels(ticklabels)
+
+    ticks = get_natural_ticks_sexa(np.array(ax.get_ylim()) + center_pos[1]*3600)
+    ticks = np.flip(ticks)
+    ticklabels = []
+    old_sd = None
+    old_sm = None
+    old_ss = None
+    for tick in ticks:
+        if tick < 0:
+            sign = "-"
+        else:
+            sign = ""
+        d = fix_float(np.abs(tick / 3600))
+        m = fix_float((d - int(d)) * 60)
+        s = fix_float((m - int(m)) * 60)
+
+        sd = f"{sign}{int(d):02d}$^\\circ$"
+        if sd == old_sd: sd = ""
+        else: old_sd = sd
+        sm = f"{int(m):02d}$'$"
+        if sm == old_sm: sm = ""
+        else: old_sm = sm
+        ss = f"{int(s):02d}$''$"
+        if ss == old_ss or (sm != "" and s == 0.): ss = ""
+        else: old_ss = ss
+
+        ticklabels.append(f"{sd}{sm}{ss}")
+
+    ax.set_yticks(ticks - center_pos[1]*3600)
+    ax.set_yticklabels(ticklabels)
