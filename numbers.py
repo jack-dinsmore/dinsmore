@@ -30,10 +30,10 @@ def sci_not(f, digits=None):
     if digits is None:
         return excess, power
     else:
-        return f"{round_exact(f, digits)} \\times 10^{{{power}}}"
+        return f"{round_exact(excess, digits)} \\times 10^{{{power}}}"
         
-def unc_latex(f, error):
-    """Returns a LaTeX-formatted string for `f` with uncertainty `error`"""
+def unc_latex_parens(f, error):
+    """Returns a LaTeX-formatted string for `f` with uncertainty `error` in scientific notation"""
     if np.isnan(f): return "nan"
     excess_f, power_f = sci_not(f)
     excess_e, power_e = sci_not(error)
@@ -41,3 +41,20 @@ def unc_latex(f, error):
     f_str = round_exact(excess_f, digits)
     e_str = round_exact(excess_e, 0)
     return f"{f_str}({e_str}) \\times 10^{{{power_f}}}"
+        
+def unc_latex_noexp_pm(f, error):
+    """Returns a LaTeX-formatted string for `f` with uncertainty `error` as a straight number, not scientific notation """
+    if np.isnan(f): return "nan"
+    power_e = int(np.floor(np.log10(np.abs(error))))
+    return f"{round_exact(f, -power_e)} \\pm {round_exact(error, -power_e)}"
+        
+def unc_latex_noexp_parens(f, error):
+    """Returns a LaTeX-formatted string for `f` with uncertainty `error` in scientific notation"""
+    if np.isnan(f): return "nan"
+    excess_e, power_e = sci_not(error)
+    f_str = round_exact(f, -power_e)
+    if power_e < 1:
+        e_str = round_exact(excess_e, 0)
+    else:
+        e_str = round_exact(error, -power_e)
+    return f"{f_str}({e_str})"

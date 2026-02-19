@@ -13,6 +13,10 @@ def blur(image, sigma):
     flat = convolve(np.ones_like(image), gauss, mode="same")
     return convolve(image, gauss, mode="same") / flat
 
+def weighted_blur(image, weights, sigma):
+    # Blur the image where sigma is in units of pixels
+    return blur(image*weights, sigma) / blur(weights, sigma)
+
 def blur1d(image, sigma):
     # Blur the image where sigma is in units of pixels
     width = int(np.ceil(3 * sigma))

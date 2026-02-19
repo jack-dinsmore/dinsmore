@@ -5,6 +5,10 @@ SEPIA = "#ba9988"
 def cubehelix(start, rotations=0, hue_start=2, hue_end=2, gamma=1, lightness_start=0, lightness_end=1, reverse=False):
     # https://davidjohnstone.net/cubehelix-gradient-picker
 
+    if np.abs(lightness_end - lightness_start) < 0.01:
+        lightness_end = lightness_start + 0.01
+    rotations /= (lightness_end - lightness_start)
+
     return Cubehelix.make(
         start=start/120+1, rotation=rotations, gamma=gamma,
         min_sat=hue_start, max_sat=hue_end, min_light=lightness_start, max_light=lightness_end,
@@ -166,15 +170,25 @@ def replace_labels_sexa(ax, center_pos):
         m = fix_float((d - int(d)) * 60)
         s = fix_float((m - int(m)) * 60)
 
+        print(tick, old_sd, old_sm, old_ss, f"{sign}{int(d):02d}$^\\circ$", f"{int(m):02d}$'$", f"{int(s):02d}$''$")
         sd = f"{sign}{int(d):02d}$^\\circ$"
         if sd == old_sd: sd = ""
-        else: old_sd = sd
+        else:
+            old_sd = sd
+            old_sm = None
+            old_ss = None
         sm = f"{int(m):02d}$'$"
-        if sm == old_sm: sm = ""
-        else: old_sm = sm
+        if sm == old_sm:
+            sm = ""
+        else:
+            old_sm = sm
+            old_ss = None
         ss = f"{int(s):02d}$''$"
-        if ss == old_ss or (sm != "" and s == 0.): ss = ""
-        else: old_ss = ss
+        if ss == old_ss:
+            ss = ""
+        else:
+            old_ss = ss
+        print(tick, sd, sm, ss)
 
         ticklabels.append(f"{sd}{sm}{ss}")
 

@@ -16,7 +16,6 @@ def sky_to_ra_dec(x, y, xcol, ycol):
     )
     return ra, dec
 
-
 def rough_sky_to_ra_dec(x, y, xcol, ycol):
     stretch = np.cos(ycol.coord_ref_value * np.pi / 180)
     xs = (x - xcol.coord_ref_point)/stretch * xcol.coord_inc + xcol.coord_ref_value
@@ -37,8 +36,9 @@ def to_hms(d, arcsec_precision=None):
     x = (x- int(x)) * 60
     s = x
     if arcsec_precision is not None:
-        s = round(s, arcsec_precision)
-    return f"{h:02d}:{m:02d}:{s}"
+        return f"{h:02d}:{m:02d}:{s:.{arcsec_precision}f}"
+    else:
+        return f"{h:02d}:{m:02d}:{s}"
 
 def from_dms(s):
     # Convert the passed string to hms from degrees
@@ -56,5 +56,6 @@ def to_dms(d, arcsec_precision=None):
     x = (x- int(x)) * 60
     s = x
     if arcsec_precision is not None:
-        s = round(s, arcsec_precision)
-    return f"{sign}{d:02d}:{m:02d}:{s}"
+        return f"{sign}{d:02d}:{m:02d}:{s:.{arcsec_precision}f}"
+    else:
+        return f"{sign}{d:02d}:{m:02d}:{s}"
