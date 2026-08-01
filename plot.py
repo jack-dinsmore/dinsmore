@@ -1,6 +1,10 @@
 import numpy as np
 from palettable.cubehelix import Cubehelix
 SEPIA = "#ba9988"
+TURQUOISE = "#6baba5"
+ORANGE = "#f28159"
+SALMON = "#d98b88"
+# https://rufflewind.com/_urandom/colorpicker/#ba9988
 
 def cubehelix(start, rotations=0, hue_start=2, hue_end=2, gamma=1, lightness_start=0, lightness_end=1, reverse=False):
     # https://davidjohnstone.net/cubehelix-gradient-picker
@@ -170,7 +174,6 @@ def replace_labels_sexa(ax, center_pos):
         m = fix_float((d - int(d)) * 60)
         s = fix_float((m - int(m)) * 60)
 
-        print(tick, old_sd, old_sm, old_ss, f"{sign}{int(d):02d}$^\\circ$", f"{int(m):02d}$'$", f"{int(s):02d}$''$")
         sd = f"{sign}{int(d):02d}$^\\circ$"
         if sd == old_sd: sd = ""
         else:
@@ -188,9 +191,32 @@ def replace_labels_sexa(ax, center_pos):
             ss = ""
         else:
             old_ss = ss
-        print(tick, sd, sm, ss)
 
         ticklabels.append(f"{sd}{sm}{ss}")
 
     ax.set_yticks(ticks - center_pos[1]*3600)
     ax.set_yticklabels(ticklabels)
+
+def explicit_clip(fig):
+    # Attempt to fix the plotted stuff escaping the plot, which Stefano was seeing in his printed versions
+    for ax in fig.axes:
+        for artist in ax.get_children():
+            artist.set_clip_path(ax.patch)
+
+def broken_plot(ax, x, y, break_distance=90, **kwargs):
+    deltas = np.abs(y[1:] - y[:-1])
+    step = 2*break_distance
+    break_indices = np.where(deltas > break_distance)[0]
+    break_indices = np.concatenate([[0], break_indices, [len(deltas)-1]])
+    for i in range(len(break_indices)-1):
+        start = break_indices[i]
+        stop = break_indices[i+1]+2
+        new_start = y[start] + step if y[start] < y[start+1] else y[start] - step
+        if stop == len(y):
+            stop -= 1
+            newy = np.concatenate([[new_start], y[start+1:stop]])
+        else:
+            new_stop = y[stop] + step if y[stop] < y[stop+1] else y[stop] - step
+            newy = np.concatenate([[new_start], y[start+1:stop-1], [new_stop]])
+
+        ax.plot(x[start:stop], newy, **kwargs)

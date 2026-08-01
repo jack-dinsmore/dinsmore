@@ -1,5 +1,13 @@
 import numpy as np
 
+import logging, warnings
+from astropy.wcs import FITSFixedWarning
+logger = logging.getLogger('ixpeobssim')
+logger.setLevel(logging.WARNING)
+consoleHandler = logging.StreamHandler()
+consoleHandler.setLevel(logging.WARNING)
+warnings.simplefilter('ignore', FITSFixedWarning)
+
 G_NEWTON = 6.67430e-8
 ELECTRON_MASS = 9.1093897e-28
 PROTON_MASS = 1.673e-24
@@ -10,6 +18,7 @@ FINE_STRUCTURE_CONSTANT = ELECTRON_CHARGE**2 / HBAR / SPEED_OF_LIGHT
 ELECTRON_RADIUS = ELECTRON_CHARGE**2 / (ELECTRON_MASS*SPEED_OF_LIGHT**2)
 SIGMA_T = 8*np.pi/3 * ELECTRON_RADIUS**2
 CMB_ENERGY_DENSITY = 0.260 * 1.60218e-12
+SOLAR_MASS = 1.989e+33
 
 ERG_PER_KEV = 1.60218e-9
 PC_PER_CM = 3.24078e-19
